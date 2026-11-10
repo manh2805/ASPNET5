@@ -1,27 +1,57 @@
-@model IEnumerable<bt33.Models.Product>
+﻿@model IEnumerable<bt33.Models.Product>
 
 @{
     ViewData["Title"] = "Products";
+
+    string search = ViewBag.Search ?? "";
+    string sortOrder = ViewBag.SortOrder;
+    bool desc = ViewBag.Desc;
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    int totalItems = ViewBag.TotalItems;
+
+    // Mũi tên cho cột đang sắp xếp
+    string Arrow(string col) => sortOrder == col ? (desc ? " ▼" : " ▲") : "";
+    // Bấm lại cột đang sắp xếp thì đảo chiều, bấm cột khác thì tăng dần
+    bool NextDesc(string col) => sortOrder == col ? !desc : false;
 }
 
 <h1>Products</h1>
 
-<p>
+<div class="d-flex justify-content-between align-items-center mb-3">
     <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
+
+    @* Tìm kiếm: form GET -> /Product?search=... *@
+    <form asp-action="Index" method="get" class="d-flex gap-2">
+        <input type="text" name="search" value="@search" class="form-control" placeholder="Tìm theo tên, mô tả, danh mục..." />
+        <input type="hidden" name="sortOrder" value="@sortOrder" />
+        <input type="hidden" name="desc" value="@desc.ToString().ToLower()" />
+        <button type="submit" class="btn btn-outline-primary">Tìm</button>
+        @if (!string.IsNullOrEmpty(search))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Xóa</a>
+        }
+    </form>
+</div>
+
+<p class="text-muted">Tìm thấy @totalItems sản phẩm @(string.IsNullOrEmpty(search) ? "" : $"cho \"{search}\"")</p>
 
 <table class="table table-bordered">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(m => m.Id)</th>
-            <th>@Html.DisplayNameFor(m => m.Name)</th>
-            <th>@Html.DisplayNameFor(m => m.Price)</th>
-            <th>@Html.DisplayNameFor(m => m.Description)</th>
-            <th>@Html.DisplayNameFor(m => m.CategoryId)</th>
+            <th><a asp-action="Index" asp-route-search="@search" asp-route-sortOrder="id" asp-route-desc="@NextDesc("id")">Id@(Arrow("id"))</a></th>
+            <th><a asp-action="Index" asp-route-search="@search" asp-route-sortOrder="name" asp-route-desc="@NextDesc("name")">Tên@(Arrow("name"))</a></th>
+            <th>Giá</th>
+            <th>Mô tả</th>
+            <th>Danh mục</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
+        @if (!Model.Any())
+        {
+            <tr><td colspan="6" class="text-center text-muted">Không có sản phẩm nào.</td></tr>
+        }
         @foreach (var p in Model)
         {
             <tr>
@@ -39,3 +69,21 @@
         }
     </tbody>
 </table>
+
+@* Phân trang: giữ nguyên từ khóa và cách sắp xếp khi chuyển trang *@
+<nav>
+    <ul class="pagination">
+        <li class="page-item @(page == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-search="@search" asp-route-sortOrder="@sortOrder" asp-route-desc="@desc" asp-route-page="@(page - 1)">«</a>
+        </li>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == page ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-search="@search" asp-route-sortOrder="@sortOrder" asp-route-desc="@desc" asp-route-page="@i">@i</a>
+            </li>
+        }
+        <li class="page-item @(page == totalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-search="@search" asp-route-sortOrder="@sortOrder" asp-route-desc="@desc" asp-route-page="@(page + 1)">»</a>
+        </li>
+    </ul>
+</nav>

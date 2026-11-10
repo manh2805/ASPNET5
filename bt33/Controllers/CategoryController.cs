@@ -1,16 +1,12 @@
-﻿using bt33.Models;
+﻿using bt33.Data;
+using bt33.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace bt33.Controllers
 {
     public class CategoryController : Controller
     {
-        public static List<Category> categories = new List<Category>
-        {
-            new Category { Id = 1, Name = "Laptop" },
-            new Category { Id = 2, Name = "Phone" },
-            new Category { Id = 3, Name = "Tablet" }
-        };
+        private static List<Category> categories => DataSeeds.categories;
 
         // GET: Category
         [HttpGet]
